@@ -76,6 +76,126 @@ The 6 different sized theaters will be referenced throughout the booking flow:
 5. **Screen 5** - Small (100 seats)
 6. **Screen 6** - Small (100 seats)
 
+## Database Schema
+
+### MVP Database Structure
+
+**Movies Table**
+```sql
+movies {
+  id: string (primary key)
+  title: string
+  year: number (1998)
+  genre: string[]
+  rating: string (G, PG, PG-13, R)
+  runtime_minutes: number
+  synopsis: text
+  director: string
+  cast: string[]
+  poster_url: string
+  trailer_url?: string
+  release_date: date
+  created_at: timestamp
+  updated_at: timestamp
+}
+```
+
+**Theaters Table**
+```sql
+theaters {
+  id: number (1-6, primary key)
+  name: string ("Screen 1", "Screen 2", etc.)
+  size: string ("Small", "Medium", "Large")
+  total_seats: number (100, 150, or 200)
+  rows: number
+  seats_per_row: number
+  created_at: timestamp
+}
+```
+
+**Showtimes Table**
+```sql
+showtimes {
+  id: string (primary key)
+  movie_id: string (foreign key -> movies.id)
+  theater_id: number (foreign key -> theaters.id)
+  show_date: date
+  show_time: time
+  price: decimal (1998 pricing: $4.50-$7.50)
+  available_seats: number
+  created_at: timestamp
+}
+```
+
+**Seats Table**
+```sql
+seats {
+  id: string (primary key)
+  theater_id: number (foreign key -> theaters.id)
+  row: string (A, B, C, etc.)
+  number: number (1, 2, 3, etc.)
+  seat_type: string ("standard", "accessible")
+  created_at: timestamp
+}
+```
+
+**Bookings Table** _(Non-functional, for demo purposes)_
+```sql
+bookings {
+  id: string (primary key)
+  showtime_id: string (foreign key -> showtimes.id)
+  customer_name: string
+  customer_email: string
+  total_amount: decimal
+  booking_status: string ("confirmed", "cancelled")
+  booking_reference: string
+  created_at: timestamp
+}
+```
+
+**Booking_Seats Table**
+```sql
+booking_seats {
+  id: string (primary key)
+  booking_id: string (foreign key -> bookings.id)
+  seat_id: string (foreign key -> seats.id)
+  ticket_type: string ("adult", "child", "senior")
+  price: decimal
+}
+```
+
+**Concessions Table**
+```sql
+concessions {
+  id: string (primary key)
+  name: string
+  category: string ("snacks", "drinks", "candy")
+  description: text
+  price: decimal (1998 pricing)
+  image_url?: string
+  available: boolean
+  created_at: timestamp
+}
+```
+
+### Sample 1998 Data Structure
+
+**Featured Movies** (Popular 1998 releases):
+- Titanic, Armageddon, Saving Private Ryan, There's Something About Mary
+- The Truman Show, Rush Hour, Deep Impact, Godzilla, etc.
+
+**Theater Configuration**:
+- Screens 1-2: Large theaters (200 seats, 15 rows, ~13 seats/row)
+- Screens 3-4: Medium theaters (150 seats, 12 rows, ~12 seats/row)  
+- Screens 5-6: Small theaters (100 seats, 10 rows, 10 seats/row)
+
+**1998 Pricing**:
+- Matinee: $4.50
+- Evening: $7.50
+- Senior/Child: $4.00
+- Popcorn: $3.50 (small), $4.50 (large)
+- Soda: $2.75 (small), $3.75 (large)
+
 ## Tech
 
 This project is built with modern web technologies:

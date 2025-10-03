@@ -1,34 +1,22 @@
-import js from '@eslint/js';
-import globals from 'globals';
-import tseslint from 'typescript-eslint';
-import pluginReact from 'eslint-plugin-react';
+import { FlatCompat } from '@eslint/eslintrc';
 
-export default [
-  {
-    ignores: [
+const compat = new FlatCompat({
+  // import.meta.dirname is available after Node.js v20.11.0
+  baseDirectory: import.meta.dirname,
+});
+
+const eslintConfig = [
+  ...compat.config({
+    extends: ['next/core-web-vitals', 'next/typescript', 'prettier'],
+    settings: { react: { version: 'detect' } },
+    ignorePatterns: [
       '.next/**',
       'node_modules/**',
       'dist/**',
       'build/**',
       '**/*.d.ts',
     ],
-  },
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
-  pluginReact.configs.flat.recommended,
-  {
-    files: ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    languageOptions: {
-      globals: globals.browser,
-    },
-    rules: {
-      'react/react-in-jsx-scope': 'off',
-      'react/jsx-uses-react': 'off',
-    },
-    settings: {
-      react: {
-        version: 'detect',
-      },
-    },
-  },
+  }),
 ];
+
+export default eslintConfig;

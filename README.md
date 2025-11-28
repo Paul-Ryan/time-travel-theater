@@ -85,7 +85,7 @@ The 6 different sized theaters will be referenced throughout the booking flow:
 movies {
   id: string (primary key)
   title: string
-  year: number (1998)
+  year: year (1998)
   genre: string[]
   rating: string (G, PG, PG-13, R)
   runtime_minutes: number

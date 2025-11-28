@@ -1,67 +1,82 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { movieService, showtimeService } from "@/lib/supabase";
+import type { Movie, Showtime } from "@/lib/supabase";
+
+type MovieWithShowtimes = Movie & {
+  showtimes: Showtime[];
+};
+
 export default function MoviesPage() {
-  // Placeholder movie data
-  const nowPlaying = [
-    {
-      id: 1,
-      title: "Back to the Future",
-      year: 1985,
-      duration: "116 min",
-      genre: "Sci-Fi, Adventure",
-      showtimes: ["2:00 PM", "5:30 PM", "8:45 PM"],
-      poster: "/api/placeholder/300/450",
-      description: "A teenager is accidentally sent 30 years into the past in a time-traveling DeLorean invented by his friend Dr. Emmett Brown."
-    },
-    {
-      id: 2,
-      title: "Groundhog Day",
-      year: 1993,
-      duration: "101 min",
-      genre: "Comedy, Fantasy",
-      showtimes: ["1:15 PM", "4:20 PM", "7:30 PM"],
-      poster: "/api/placeholder/300/450",
-      description: "A narcissistic, self-centered weatherman finds himself in a time loop on Groundhog Day."
-    },
-    {
-      id: 3,
-      title: "The Terminator",
-      year: 1984,
-      duration: "107 min",
-      genre: "Sci-Fi, Action",
-      showtimes: ["3:45 PM", "6:15 PM", "9:00 PM"],
-      poster: "/api/placeholder/300/450",
-      description: "A cyborg assassin is sent back in time to kill the mother of humanity's future savior."
-    },
-    {
-      id: 4,
-      title: "12 Monkeys",
-      year: 1995,
-      duration: "129 min",
-      genre: "Sci-Fi, Thriller",
-      showtimes: ["2:30 PM", "6:00 PM", "9:15 PM"],
-      poster: "/api/placeholder/300/450",
-      description: "In a future world devastated by disease, a convict is sent back in time to gather information about the man-made virus."
-    },
-    {
-      id: 5,
-      title: "About Time",
-      year: 2013,
-      duration: "123 min",
-      genre: "Romance, Comedy",
-      showtimes: ["1:00 PM", "4:45 PM", "8:00 PM"],
-      poster: "/api/placeholder/300/450",
-      description: "A young man discovers he can travel back in time and tries to improve his life."
-    },
-    {
-      id: 6,
-      title: "Looper",
-      year: 2012,
-      duration: "119 min",
-      genre: "Sci-Fi, Action",
-      showtimes: ["2:15 PM", "5:45 PM", "8:30 PM"],
-      poster: "/api/placeholder/300/450",
-      description: "In 2074, when the mob wants to get rid of someone, the target is sent into the past, where a looper kills and disposes of them."
+  const [movies, setMovies] = useState<MovieWithShowtimes[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchMoviesWithShowtimes() {
+      try {
+        const allMovies = await movieService.getAllMovies();
+        const moviesWithShowtimes = await Promise.all(
+          allMovies.map(async (movie) => {
+            const showtimes = await showtimeService.getMovieShowtimes(movie.id);
+            return {
+              ...movie,
+              showtimes: showtimes || []
+            };
+          })
+        );
+        setMovies(moviesWithShowtimes);
+      } catch (err) {
+        console.error('Error fetching movies:', err);
+        setError('Failed to load movies. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
     }
-  ];
+
+    fetchMoviesWithShowtimes();
+  }, []);
+
+  const formatShowtime = (showtime: Showtime) => {
+    const time = new Date(`2000-01-01T${showtime.show_time}`);
+    return time.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
+  const formatDuration = (minutes: number) => {
+    return `${minutes} min`;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground mx-auto mb-4"></div>
+          <p>Loading movies...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="bg-foreground text-background px-4 py-2 rounded-md"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -97,19 +112,27 @@ export default function MoviesPage() {
 
         {/* Movies Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {nowPlaying.map((movie) => (
+          {movies.map((movie) => (
             <div 
               key={movie.id} 
               className="bg-black/5 dark:bg-white/5 rounded-lg overflow-hidden border border-black/10 dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 transition-colors"
             >
               {/* Movie Poster Placeholder */}
               <div className="aspect-[2/3] bg-gradient-to-br from-black/10 to-black/20 dark:from-white/10 dark:to-white/20 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-3 bg-black/20 dark:bg-white/20 rounded-full flex items-center justify-center">
-                    <span className="text-2xl">🎬</span>
+                {movie.poster_url ? (
+                  <img 
+                    src={movie.poster_url} 
+                    alt={movie.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-3 bg-black/20 dark:bg-white/20 rounded-full flex items-center justify-center">
+                      <span className="text-2xl">🎬</span>
+                    </div>
+                    <p className="text-sm text-black/60 dark:text-white/60">Movie Poster</p>
                   </div>
-                  <p className="text-sm text-black/60 dark:text-white/60">Movie Poster</p>
-                </div>
+                )}
               </div>
 
               {/* Movie Info */}
@@ -117,7 +140,7 @@ export default function MoviesPage() {
                 <div className="mb-3">
                   <h3 className="text-xl font-semibold mb-1">{movie.title}</h3>
                   <p className="text-sm text-black/60 dark:text-white/60">
-                    {movie.year} • {movie.duration} • {movie.genre}
+                    {movie.year} • {formatDuration(movie.duration)} • {movie.genre}
                   </p>
                 </div>
 
@@ -127,22 +150,35 @@ export default function MoviesPage() {
 
                 {/* Showtimes */}
                 <div className="mb-4">
-                  <p className="text-sm font-medium mb-2">Showtimes Today:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {movie.showtimes.map((time, index) => (
-                      <span 
-                        key={index}
-                        className="px-3 py-1 bg-foreground text-background text-sm rounded-full font-medium"
-                      >
-                        {time}
-                      </span>
-                    ))}
-                  </div>
+                  <p className="text-sm font-medium mb-2">Upcoming Showtimes:</p>
+                  {movie.showtimes.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {movie.showtimes.slice(0, 3).map((showtime, index) => (
+                        <span 
+                          key={index}
+                          className="px-3 py-1 bg-foreground text-background text-sm rounded-full font-medium"
+                          title={`${showtime.show_date} - $${showtime.price}`}
+                        >
+                          {formatShowtime(showtime)}
+                        </span>
+                      ))}
+                      {movie.showtimes.length > 3 && (
+                        <span className="px-3 py-1 bg-black/10 dark:bg-white/10 text-sm rounded-full">
+                          +{movie.showtimes.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-black/50 dark:text-white/50">No showtimes available</p>
+                  )}
                 </div>
 
                 {/* Book Button */}
-                <button className="w-full bg-foreground text-background hover:bg-black/80 dark:hover:bg-white/80 transition-colors py-2 px-4 rounded-md font-medium">
-                  Select Tickets
+                <button 
+                  className="w-full bg-foreground text-background hover:bg-black/80 dark:hover:bg-white/80 transition-colors py-2 px-4 rounded-md font-medium disabled:opacity-50"
+                  disabled={movie.showtimes.length === 0}
+                >
+                  {movie.showtimes.length > 0 ? 'Select Tickets' : 'Coming Soon'}
                 </button>
               </div>
             </div>

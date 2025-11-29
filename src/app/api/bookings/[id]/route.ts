@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { bookingService, authService } from '@/lib/supabase';
+import { bookingService, authService, supabase } from '@/lib/database';
 
 interface RouteParams {
   params: {
@@ -37,28 +37,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // For now, we'll implement a simple update using Supabase client
-    // In a real app, you'd want to verify the user owns this booking
-    const { supabase } = await import('@/lib/supabase');
-    
-    const { data: booking, error } = await supabase
-      .from('bookings')
-      .update({ booking_status })
-      .eq('id', bookingId)
-      .eq('user_id', user.id) // Ensure user can only update their own bookings
-      .select()
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    if (!booking) {
-      return NextResponse.json(
-        { error: 'Booking not found or access denied' },
-        { status: 404 }
-      );
-    }
+    // Use the booking service to update the booking
+    const booking = await bookingService.updateBookingStatus(
+      bookingId,
+      user.id,
+      booking_status
+    );
 
     return NextResponse.json({
       booking,
@@ -97,31 +81,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const { supabase } = await import('@/lib/supabase');
-    
-    const { data: booking, error } = await supabase
-      .from('bookings')
-      .select(`
-        *,
-        showtimes (
-          *,
-          movies (title, poster_url)
-        )
-      `)
-      .eq('id', bookingId)
-      .eq('user_id', user.id) // Ensure user can only access their own bookings
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    if (!booking) {
-      return NextResponse.json(
-        { error: 'Booking not found or access denied' },
-        { status: 404 }
-      );
-    }
+    const booking = await bookingService.getBookingById(bookingId, user.id);
 
     return NextResponse.json({ booking });
 

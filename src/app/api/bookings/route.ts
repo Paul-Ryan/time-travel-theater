@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { bookingService, authService } from '@/lib/supabase';
+import { bookingService, authService } from '@/lib/database';
 
 export async function POST(request: NextRequest) {
   try {

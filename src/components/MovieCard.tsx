@@ -1,6 +1,6 @@
 "use client";
 
-import type { Movie, Showtime } from "@/lib/supabase";
+import type { Movie, Showtime } from "@/lib/database";
 
 type MovieWithShowtimes = Movie & {
   showtimes: Showtime[];

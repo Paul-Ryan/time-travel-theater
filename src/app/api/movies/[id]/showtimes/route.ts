@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { showtimeService } from '@/lib/supabase';
+import { showtimeService } from '@/lib/database';
 
 interface RouteParams {
   params: {

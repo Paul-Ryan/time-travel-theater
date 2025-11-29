@@ -1,4 +1,4 @@
-import { movieService } from "@/lib/supabase";
+import { movieService } from "@/lib/database";
 import MovieCard from "@/components/MovieCard";
 
 export default async function MoviesPage() {

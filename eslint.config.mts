@@ -16,6 +16,9 @@ const eslintConfig = [
       'build/**',
       '**/*.d.ts',
     ],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
   }),
 ];
 

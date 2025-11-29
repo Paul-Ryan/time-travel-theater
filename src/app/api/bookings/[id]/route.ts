@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { bookingService, authService, supabase } from '@/lib/database';
+import { bookingService, authService } from '@/lib/database';
 
 interface RouteParams {
   params: {

@@ -60,6 +60,42 @@ export const movieService = {
     return data as Movie[]
   },
 
+  // Get all movies with their showtimes in one query
+  async getAllMoviesWithShowtimes() {
+    const { data, error } = await supabase
+      .from('movies')
+      .select(`
+        *,
+        showtimes!inner (
+          id,
+          movie_id,
+          show_date,
+          show_time,
+          theater_room,
+          available_seats,
+          total_seats,
+          price,
+          created_at
+        )
+      `)
+      .gte('showtimes.show_date', new Date().toISOString().split('T')[0])
+      .order('title')
+    
+    if (error) throw error
+    
+    // Sort showtimes for each movie on the client side
+    const moviesWithSortedShowtimes = data.map(movie => ({
+      ...movie,
+      showtimes: movie.showtimes.sort((a: Showtime, b: Showtime) => {
+        const dateCompare = a.show_date.localeCompare(b.show_date);
+        if (dateCompare !== 0) return dateCompare;
+        return a.show_time.localeCompare(b.show_time);
+      })
+    }));
+    
+    return moviesWithSortedShowtimes as (Movie & { showtimes: Showtime[] })[]
+  },
+
   // Get movie with showtimes
   async getMovieWithShowtimes(movieId: number) {
     const { data, error } = await supabase

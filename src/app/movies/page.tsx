@@ -1,78 +1,23 @@
-"use client";
+import { movieService } from "@/lib/supabase";
+import MovieCard from "@/components/MovieCard";
 
-import { useEffect, useState } from "react";
-import { movieService, showtimeService } from "@/lib/supabase";
-import type { Movie, Showtime } from "@/lib/supabase";
-
-type MovieWithShowtimes = Movie & {
-  showtimes: Showtime[];
-};
-
-export default function MoviesPage() {
-  const [movies, setMovies] = useState<MovieWithShowtimes[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchMoviesWithShowtimes() {
-      try {
-        const allMovies = await movieService.getAllMovies();
-        const moviesWithShowtimes = await Promise.all(
-          allMovies.map(async (movie) => {
-            const showtimes = await showtimeService.getMovieShowtimes(movie.id);
-            return {
-              ...movie,
-              showtimes: showtimes || []
-            };
-          })
-        );
-        setMovies(moviesWithShowtimes);
-      } catch (err) {
-        console.error('Error fetching movies:', err);
-        setError('Failed to load movies. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchMoviesWithShowtimes();
-  }, []);
-
-  const formatShowtime = (showtime: Showtime) => {
-    const time = new Date(`2000-01-01T${showtime.show_time}`);
-    return time.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true 
-    });
-  };
-
-  const formatDuration = (minutes: number) => {
-    return `${minutes} min`;
-  };
-
-  if (loading) {
+export default async function MoviesPage() {
+  let movies;
+  
+  try {
+    movies = await movieService.getAllMoviesWithShowtimes();
+  } catch (error) {
+    console.error('Error fetching movies:', error);
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground mx-auto mb-4"></div>
-          <p>Loading movies...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
+          <p className="text-red-500 mb-4">Failed to load movies. Please try again later.</p>
+          <a 
+            href="/movies"
             className="bg-foreground text-background px-4 py-2 rounded-md"
           >
             Retry
-          </button>
+          </a>
         </div>
       </div>
     );
@@ -111,79 +56,17 @@ export default function MoviesPage() {
         </div>
 
         {/* Movies Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {movies.map((movie) => (
-            <div 
-              key={movie.id} 
-              className="bg-black/5 dark:bg-white/5 rounded-lg overflow-hidden border border-black/10 dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 transition-colors"
-            >
-              {/* Movie Poster Placeholder */}
-              <div className="aspect-[2/3] bg-gradient-to-br from-black/10 to-black/20 dark:from-white/10 dark:to-white/20 flex items-center justify-center">
-                {movie.poster_url ? (
-                  <img 
-                    src={movie.poster_url} 
-                    alt={movie.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-3 bg-black/20 dark:bg-white/20 rounded-full flex items-center justify-center">
-                      <span className="text-2xl">🎬</span>
-                    </div>
-                    <p className="text-sm text-black/60 dark:text-white/60">Movie Poster</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Movie Info */}
-              <div className="p-6">
-                <div className="mb-3">
-                  <h3 className="text-xl font-semibold mb-1">{movie.title}</h3>
-                  <p className="text-sm text-black/60 dark:text-white/60">
-                    {movie.year} • {formatDuration(movie.duration)} • {movie.genre}
-                  </p>
-                </div>
-
-                <p className="text-sm text-black/70 dark:text-white/70 mb-4 line-clamp-3">
-                  {movie.description}
-                </p>
-
-                {/* Showtimes */}
-                <div className="mb-4">
-                  <p className="text-sm font-medium mb-2">Upcoming Showtimes:</p>
-                  {movie.showtimes.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {movie.showtimes.slice(0, 3).map((showtime, index) => (
-                        <span 
-                          key={index}
-                          className="px-3 py-1 bg-foreground text-background text-sm rounded-full font-medium"
-                          title={`${showtime.show_date} - $${showtime.price}`}
-                        >
-                          {formatShowtime(showtime)}
-                        </span>
-                      ))}
-                      {movie.showtimes.length > 3 && (
-                        <span className="px-3 py-1 bg-black/10 dark:bg-white/10 text-sm rounded-full">
-                          +{movie.showtimes.length - 3} more
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-black/50 dark:text-white/50">No showtimes available</p>
-                  )}
-                </div>
-
-                {/* Book Button */}
-                <button 
-                  className="w-full bg-foreground text-background hover:bg-black/80 dark:hover:bg-white/80 transition-colors py-2 px-4 rounded-md font-medium disabled:opacity-50"
-                  disabled={movie.showtimes.length === 0}
-                >
-                  {movie.showtimes.length > 0 ? 'Select Tickets' : 'Coming Soon'}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+        {movies.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {movies.map((movie) => (
+              <MovieCard key={movie.id} movie={movie} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-black/50 dark:text-white/50">No movies are currently playing.</p>
+          </div>
+        )}
 
         {/* Additional Info */}
         <div className="mt-12 text-center">

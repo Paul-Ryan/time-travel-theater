@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { showtimeService } from '@/lib/database';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const movieId = parseInt(params.id);
+    const resolvedParams = await params;
+    const movieId = parseInt(resolvedParams.id);
     if (isNaN(movieId)) {
       return NextResponse.json(
         { error: 'Invalid movie ID' },

@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Verify user is authenticated
     const user = await authService.getCurrentUser();

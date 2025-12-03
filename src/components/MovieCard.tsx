@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { Movie, Showtime } from "@/lib/database";
 
 type MovieWithShowtimes = Movie & {
@@ -27,12 +28,14 @@ export default function MovieCard({ movie }: MovieCardProps) {
   return (
     <div className="bg-black/5 dark:bg-white/5 rounded-lg overflow-hidden border border-black/10 dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 transition-colors">
       {/* Movie Poster Placeholder */}
-      <div className="aspect-[2/3] bg-gradient-to-br from-black/10 to-black/20 dark:from-white/10 dark:to-white/20 flex items-center justify-center">
+      <div className="aspect-[2/3] bg-gradient-to-br from-black/10 to-black/20 dark:from-white/10 dark:to-white/20 flex items-center justify-center relative">
         {movie.poster_url ? (
-          <img 
+          <Image 
             src={movie.poster_url} 
             alt={movie.title}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         ) : (
           <div className="text-center">

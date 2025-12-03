@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { bookingService, authService } from '@/lib/database';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
@@ -18,7 +18,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const bookingId = parseInt(params.id);
+    const resolvedParams = await params;
+    const bookingId = parseInt(resolvedParams.id);
     if (isNaN(bookingId)) {
       return NextResponse.json(
         { error: 'Invalid booking ID' },
@@ -73,7 +74,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const bookingId = parseInt(params.id);
+    const resolvedParams = await params;
+    const bookingId = parseInt(resolvedParams.id);
     if (isNaN(bookingId)) {
       return NextResponse.json(
         { error: 'Invalid booking ID' },
